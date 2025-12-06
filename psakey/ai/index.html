@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>AI Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 46px 0 0 0;
+            background: #0a0a0a;
+            color: #ffffff;
+            font-family: Arial, sans-serif;
+            width: 800px;
+            height: 434px;
+            overflow: hidden;
+        }
+
+        /* Header */
+        .header {
+            height: 50px;
+            background: #1a1a1a;
+            border-bottom: 2px solid #333;
+            padding: 0 20px;
+            line-height: 50px;
+        }
+
+        .header-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+
+        .header-back {
+            float: right;
+            color: #888;
+            text-decoration: none;
+            font-size: 18px;
+        }
+
+        .header-back:hover {
+            color: #fff;
+        }
+
+        /* Area risposta */
+        .response-area {
+            height: 280px;
+            padding: 20px;
+            overflow-y: auto;
+            background: #111;
+        }
+
+        .response-text {
+            font-size: 22px;
+            line-height: 1.5;
+            color: #eee;
+        }
+
+        .response-text.loading {
+            color: #888;
+            font-style: italic;
+        }
+
+        .response-text.error {
+            color: #f44336;
+        }
+
+        /* Area input */
+        .input-area {
+            height: 104px;
+            background: #1a1a1a;
+            border-top: 2px solid #333;
+            padding: 15px 20px;
+        }
+
+        .input-row {
+            display: table;
+            width: 100%;
+            height: 74px;
+        }
+
+        .input-field {
+            display: table-cell;
+            width: 85%;
+            vertical-align: middle;
+            padding-right: 15px;
+        }
+
+        .input-field input {
+            width: 100%;
+            height: 50px;
+            font-size: 20px;
+            padding: 0 15px;
+            border: 2px solid #333;
+            border-radius: 8px;
+            background: #222;
+            color: #fff;
+            outline: none;
+        }
+
+        .input-field input:focus {
+            border-color: #4CAF50;
+        }
+
+        .input-button {
+            display: table-cell;
+            width: 15%;
+            vertical-align: middle;
+        }
+
+        .input-button button {
+            width: 100%;
+            height: 50px;
+            font-size: 20px;
+            font-weight: bold;
+            background: #4CAF50;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .input-button button:hover {
+            background: #45a049;
+        }
+
+        .input-button button:disabled {
+            background: #333;
+            color: #666;
+            cursor: not-allowed;
+        }
+
+        /* Quick buttons */
+        .quick-buttons {
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        .quick-btn {
+            display: inline-block;
+            padding: 8px 16px;
+            margin: 0 5px;
+            font-size: 14px;
+            background: #333;
+            color: #aaa;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+        }
+
+        .quick-btn:hover {
+            background: #444;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <span class="header-title">AI Assistant</span>
+        <a href="/dashboard.html" class="header-back">← Dashboard</a>
+    </div>
+
+    <!-- Area risposta -->
+    <div class="response-area">
+        <div class="response-text" id="response">
+            Ciao! Sono il tuo assistente AI. Chiedimi qualcosa...
+        </div>
+    </div>
+
+    <!-- Area input -->
+    <div class="input-area">
+        <div class="input-row">
+            <div class="input-field">
+                <input type="text" id="messageInput" placeholder="Scrivi un messaggio..." onkeypress="handleKeyPress(event)">
+            </div>
+            <div class="input-button">
+                <button id="sendBtn" onclick="sendMessage()">Invia</button>
+            </div>
+        </div>
+        <div class="quick-buttons">
+            <button class="quick-btn" onclick="quickMessage('Che tempo fa oggi?')">Meteo</button>
+            <button class="quick-btn" onclick="quickMessage('Come si arriva a...')">Direzioni</button>
+            <button class="quick-btn" onclick="quickMessage('Raccontami una curiosita')">Curiosita</button>
+            <button class="quick-btn" onclick="quickMessage('Traduci in inglese:')">Traduci</button>
+        </div>
+    </div>
+
+    <script>
+        var isLoading = false;
+
+        function handleKeyPress(e) {
+            if (e.keyCode === 13) {
+                sendMessage();
+            }
+        }
+
+        function quickMessage(text) {
+            document.getElementById('messageInput').value = text;
+            document.getElementById('messageInput').focus();
+        }
+
+        function sendMessage() {
+            if (isLoading) return;
+
+            var input = document.getElementById('messageInput');
+            var message = input.value.trim();
+
+            if (!message) return;
+
+            var responseEl = document.getElementById('response');
+            var sendBtn = document.getElementById('sendBtn');
+
+            // Mostra loading
+            isLoading = true;
+            responseEl.innerHTML = 'Sto pensando...';
+            responseEl.className = 'response-text loading';
+            sendBtn.disabled = true;
+            input.disabled = true;
+
+            // Invia richiesta
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', '/ai/chat.php', true);
+            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4) {
+                    isLoading = false;
+                    sendBtn.disabled = false;
+                    input.disabled = false;
+                    input.value = '';
+                    input.focus();
+
+                    if (xhr.status === 200) {
+                        try {
+                            var data = JSON.parse(xhr.responseText);
+                            if (data.error) {
+                                responseEl.innerHTML = 'Errore: ' + data.error;
+                                responseEl.className = 'response-text error';
+                            } else {
+                                responseEl.innerHTML = data.response || 'Nessuna risposta';
+                                responseEl.className = 'response-text';
+                            }
+                        } catch(e) {
+                            responseEl.innerHTML = 'Errore nel parsing della risposta';
+                            responseEl.className = 'response-text error';
+                        }
+                    } else {
+                        responseEl.innerHTML = 'Errore di connessione';
+                        responseEl.className = 'response-text error';
+                    }
+                }
+            };
+
+            xhr.send('message=' + encodeURIComponent(message));
+        }
+    </script>
+</body>
+</html>

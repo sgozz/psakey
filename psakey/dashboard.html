@@ -112,7 +112,7 @@
 
         .action-btn {
             display: table-cell;
-            width: 33.33%;
+            width: 25%;
             text-align: center;
             vertical-align: middle;
             border-right: 1px solid #333;
@@ -141,6 +141,7 @@
         .btn-home .action-icon { color: #2196F3; }
         .btn-work .action-icon { color: #FF9800; }
         .btn-call .action-icon { color: #4CAF50; }
+        .btn-ai .action-icon { color: #9C27B0; }
 
         /* Stato guida */
         .driving-indicator {
@@ -200,6 +201,10 @@
         <div class="action-btn btn-call" onclick="quickCall()">
             <div class="action-icon">&#9742;</div>
             <div class="action-label">Chiama</div>
+        </div>
+        <div class="action-btn btn-ai" onclick="openAI()">
+            <div class="action-icon">&#9733;</div>
+            <div class="action-label">AI</div>
         </div>
     </div>
 
@@ -327,6 +332,11 @@
             } catch(e) {
                 alert("Chiamata non disponibile");
             }
+        }
+
+        // Apri AI Assistant
+        function openAI() {
+            window.location.href = '/ai/';
         }
 
         // Inizializzazione
