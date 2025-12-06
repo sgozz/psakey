@@ -222,14 +222,14 @@
                     </div>
                 </div>
                 <div class="quick-row">
-                    <div class="quick-btn" onclick="askWithLocation('Dove posso parcheggiare qui vicino?')">
-                        <span class="icon">&#9632;</span>Parcheggi
-                    </div>
                     <div class="quick-btn" onclick="askAboutTrip()">
                         <span class="icon">&#9656;</span>Info viaggio
                     </div>
-                    <div class="quick-btn" onclick="askQuestion('Raccontami una curiosita interessante')">
-                        <span class="icon">&#9733;</span>Curiosita
+                    <div class="quick-btn" onclick="askAboutConsumption()">
+                        <span class="icon">&#9662;</span>Consumi
+                    </div>
+                    <div class="quick-btn" onclick="askDrivingTips()">
+                        <span class="icon">&#9733;</span>Eco-guida
                     </div>
                     <div class="quick-btn" onclick="showInput()">
                         <span class="icon">&#9998;</span>Scrivi...
@@ -329,6 +329,57 @@
             return null;
         }
 
+        // Ottieni dati viaggio 1
+        function getTrip1() {
+            try {
+                if (top.GetCarTrip1) {
+                    return {
+                        mileage: top.GetCarTrip1.Mileage ? top.GetCarTrip1.Mileage() : null,
+                        consumption: top.GetCarTrip1.Consumption ? top.GetCarTrip1.Consumption() : null,
+                        avgSpeed: top.GetCarTrip1.AverageSpeed ? top.GetCarTrip1.AverageSpeed() : null
+                    };
+                }
+            } catch(e) {}
+            return null;
+        }
+
+        // Ottieni dati viaggio 2
+        function getTrip2() {
+            try {
+                if (top.GetCarTrip2) {
+                    return {
+                        mileage: top.GetCarTrip2.Mileage ? top.GetCarTrip2.Mileage() : null,
+                        consumption: top.GetCarTrip2.Consumption ? top.GetCarTrip2.Consumption() : null,
+                        avgSpeed: top.GetCarTrip2.AverageSpeed ? top.GetCarTrip2.AverageSpeed() : null
+                    };
+                }
+            } catch(e) {}
+            return null;
+        }
+
+        // Ottieni tipo carburante
+        function getFuelType() {
+            try {
+                if (top.GetCar && top.GetCar.FuelType) {
+                    var type = top.GetCar.FuelType();
+                    // 1=benzina, 2=diesel, 3=GPL, 4=metano, 5=elettrico, 6=ibrido
+                    var types = {1: 'benzina', 2: 'diesel', 3: 'GPL', 4: 'metano', 5: 'elettrico', 6: 'ibrido'};
+                    return types[type] || 'carburante';
+                }
+            } catch(e) {}
+            return null;
+        }
+
+        // Ottieni chilometraggio totale
+        function getTotalMileage() {
+            try {
+                if (top.GetCar && top.GetCar.Mileage) {
+                    return top.GetCar.Mileage();
+                }
+            } catch(e) {}
+            return null;
+        }
+
         // ============================================
         // DOMANDE CONTESTUALI
         // ============================================
@@ -397,6 +448,76 @@
 
             if (speed !== null && speed > 0) {
                 question += ' Velocita attuale: ' + speed + ' km/h.';
+            }
+
+            document.getElementById('messageInput').value = question;
+            sendMessage();
+        }
+
+        // Domanda sui consumi
+        function askAboutConsumption() {
+            if (isLoading) return;
+            var trip1 = getTrip1();
+            var trip2 = getTrip2();
+            var fuelType = getFuelType();
+            var totalMileage = getTotalMileage();
+            var autonomy = getAutonomy();
+
+            var question = 'Analizza i miei consumi e dimmi se sono nella norma.';
+
+            if (fuelType) {
+                question += ' Auto a ' + fuelType + '.';
+            }
+
+            if (totalMileage) {
+                question += ' Chilometraggio totale: ' + totalMileage + ' km.';
+            }
+
+            if (trip1 && (trip1.consumption || trip1.mileage || trip1.avgSpeed)) {
+                question += ' Viaggio attuale:';
+                if (trip1.mileage) question += ' ' + trip1.mileage + ' km percorsi,';
+                if (trip1.consumption) question += ' consumo ' + trip1.consumption + ' l/100km,';
+                if (trip1.avgSpeed) question += ' velocita media ' + trip1.avgSpeed + ' km/h.';
+            }
+
+            if (trip2 && (trip2.consumption || trip2.mileage || trip2.avgSpeed)) {
+                question += ' Storico:';
+                if (trip2.mileage) question += ' ' + trip2.mileage + ' km,';
+                if (trip2.consumption) question += ' consumo ' + trip2.consumption + ' l/100km,';
+                if (trip2.avgSpeed) question += ' velocita media ' + trip2.avgSpeed + ' km/h.';
+            }
+
+            if (autonomy) {
+                question += ' Autonomia attuale: ' + autonomy + ' km.';
+            }
+
+            document.getElementById('messageInput').value = question;
+            sendMessage();
+        }
+
+        // Consigli eco-guida basati sui dati
+        function askDrivingTips() {
+            if (isLoading) return;
+            var trip1 = getTrip1();
+            var fuelType = getFuelType();
+            var speed = getSpeed();
+
+            var question = 'Dammi consigli per ridurre i consumi e guidare in modo ecologico.';
+
+            if (fuelType) {
+                question += ' Ho un\'auto a ' + fuelType + '.';
+            }
+
+            if (trip1 && trip1.consumption) {
+                question += ' Attualmente consumo ' + trip1.consumption + ' l/100km.';
+            }
+
+            if (trip1 && trip1.avgSpeed) {
+                question += ' Velocita media: ' + trip1.avgSpeed + ' km/h.';
+            }
+
+            if (speed && speed > 0) {
+                question += ' Ora vado a ' + speed + ' km/h.';
             }
 
             document.getElementById('messageInput').value = question;
