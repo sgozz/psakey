@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 46px 0 0 0;
+            background: #0a0a0a;
+            color: #ffffff;
+            font-family: Arial, sans-serif;
+            width: 800px;
+            height: 434px;
+            overflow: hidden;
+        }
+
+        /* Header con orologio e autonomia */
+        .header {
+            display: table;
+            width: 100%;
+            height: 60px;
+            background: #1a1a1a;
+            border-bottom: 2px solid #333;
+        }
+
+        .header-left, .header-right {
+            display: table-cell;
+            vertical-align: middle;
+            width: 50%;
+            padding: 0 20px;
+        }
+
+        .header-left {
+            text-align: left;
+        }
+
+        .header-right {
+            text-align: right;
+        }
+
+        .time {
+            font-size: 32px;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .autonomy {
+            font-size: 28px;
+            color: #4CAF50;
+        }
+
+        .autonomy-icon {
+            color: #4CAF50;
+            margin-right: 8px;
+        }
+
+        /* Area centrale velocita */
+        .speed-section {
+            height: 180px;
+            text-align: center;
+            padding-top: 25px;
+            background: linear-gradient(180deg, #0a0a0a 0%, #151515 100%);
+        }
+
+        .speed-value {
+            font-size: 120px;
+            font-weight: bold;
+            color: #fff;
+            line-height: 1;
+        }
+
+        .speed-unit {
+            font-size: 28px;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        /* Chilometraggio */
+        .mileage-section {
+            height: 50px;
+            background: #1a1a1a;
+            text-align: center;
+            line-height: 50px;
+            border-top: 1px solid #333;
+            border-bottom: 1px solid #333;
+        }
+
+        .mileage {
+            font-size: 22px;
+            color: #aaa;
+        }
+
+        .mileage-value {
+            color: #fff;
+            font-weight: bold;
+        }
+
+        /* Pulsanti azioni rapide */
+        .actions {
+            display: table;
+            width: 100%;
+            height: 144px;
+            background: #0f0f0f;
+        }
+
+        .action-btn {
+            display: table-cell;
+            width: 33.33%;
+            text-align: center;
+            vertical-align: middle;
+            border-right: 1px solid #333;
+            cursor: pointer;
+            background: #1a1a1a;
+        }
+
+        .action-btn:last-child {
+            border-right: none;
+        }
+
+        .action-btn:hover, .action-btn:active {
+            background: #2a2a2a;
+        }
+
+        .action-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .action-label {
+            font-size: 20px;
+            color: #ccc;
+        }
+
+        .btn-home .action-icon { color: #2196F3; }
+        .btn-work .action-icon { color: #FF9800; }
+        .btn-call .action-icon { color: #4CAF50; }
+
+        /* Stato guida */
+        .driving-indicator {
+            position: absolute;
+            top: 56px;
+            right: 10px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #666;
+        }
+
+        .driving-indicator.active {
+            background: #4CAF50;
+        }
+    </style>
+</head>
+<body>
+    <div class="driving-indicator" id="drivingIndicator"></div>
+
+    <!-- Header -->
+    <div class="header">
+        <div class="header-left">
+            <span class="time" id="clock">--:--</span>
+        </div>
+        <div class="header-right">
+            <span class="autonomy">
+                <span class="autonomy-icon">&#9981;</span>
+                <span id="autonomy">---</span> km
+            </span>
+        </div>
+    </div>
+
+    <!-- Velocita -->
+    <div class="speed-section">
+        <div class="speed-value" id="speed">--</div>
+        <div class="speed-unit">km/h</div>
+    </div>
+
+    <!-- Chilometraggio -->
+    <div class="mileage-section">
+        <span class="mileage">
+            Totale: <span class="mileage-value" id="mileage">---</span> km
+        </span>
+    </div>
+
+    <!-- Azioni rapide -->
+    <div class="actions">
+        <div class="action-btn btn-home" onclick="navigateHome()">
+            <div class="action-icon">&#8962;</div>
+            <div class="action-label">Casa</div>
+        </div>
+        <div class="action-btn btn-work" onclick="navigateWork()">
+            <div class="action-icon">&#9881;</div>
+            <div class="action-label">Lavoro</div>
+        </div>
+        <div class="action-btn btn-call" onclick="quickCall()">
+            <div class="action-icon">&#9742;</div>
+            <div class="action-label">Chiama</div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // CONFIGURAZIONE - Modifica questi valori!
+        // ============================================
+        var CONFIG = {
+            // Coordinate casa (latitudine, longitudine)
+            home: {
+                lat: 45.4642,  // Es: Milano
+                lng: 9.1900
+            },
+            // Coordinate lavoro
+            work: {
+                lat: 45.4784,
+                lng: 9.2252
+            },
+            // Numero telefono chiamata rapida
+            phoneNumber: "+39123456789"
+        };
+        // ============================================
+
+        // Funzione per formattare i numeri con separatore migliaia
+        function formatNumber(num) {
+            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        }
+
+        // Aggiorna orologio
+        function updateClock() {
+            var now = new Date();
+            var hours = now.getHours();
+            var minutes = now.getMinutes();
+
+            // Prova a usare l'orario del veicolo se disponibile
+            try {
+                if (top.GetCarTime) {
+                    var carHours = top.GetCarTime.Hours();
+                    var carMinutes = top.GetCarTime.Minutes();
+                    if (carHours > 0 || carMinutes > 0) {
+                        hours = carHours;
+                        minutes = carMinutes;
+                    }
+                }
+            } catch(e) {}
+
+            var timeStr = (hours < 10 ? "0" : "") + hours + ":" + (minutes < 10 ? "0" : "") + minutes;
+            document.getElementById("clock").innerHTML = timeStr;
+        }
+
+        // Aggiorna dati veicolo
+        function updateVehicleData() {
+            try {
+                // Velocita
+                if (top.GetCar && top.GetCar.Speed) {
+                    var speed = top.GetCar.Speed();
+                    document.getElementById("speed").innerHTML = speed;
+                }
+
+                // Autonomia
+                if (top.GetCar && top.GetCar.Autonomy) {
+                    var autonomy = top.GetCar.Autonomy();
+                    document.getElementById("autonomy").innerHTML = autonomy;
+
+                    // Cambia colore se autonomia bassa
+                    var autonomyEl = document.getElementById("autonomy").parentNode;
+                    if (autonomy < 50) {
+                        autonomyEl.style.color = "#f44336";
+                    } else if (autonomy < 100) {
+                        autonomyEl.style.color = "#FF9800";
+                    } else {
+                        autonomyEl.style.color = "#4CAF50";
+                    }
+                }
+
+                // Chilometraggio
+                if (top.GetCar && top.GetCar.Mileage) {
+                    var mileage = top.GetCar.Mileage();
+                    document.getElementById("mileage").innerHTML = formatNumber(mileage);
+                }
+
+                // Stato guida
+                if (top.GetCar && top.GetCar.DrivingState) {
+                    var driving = top.GetCar.DrivingState();
+                    var indicator = document.getElementById("drivingIndicator");
+                    if (driving) {
+                        indicator.className = "driving-indicator active";
+                    } else {
+                        indicator.className = "driving-indicator";
+                    }
+                }
+            } catch(e) {
+                // API non disponibili (test fuori dal veicolo)
+            }
+        }
+
+        // Navigazione verso casa
+        function navigateHome() {
+            try {
+                if (top.JavascriptBinding && top.JavascriptBinding.LaunchGuidance) {
+                    top.JavascriptBinding.LaunchGuidance(CONFIG.home.lat, CONFIG.home.lng);
+                }
+            } catch(e) {
+                alert("Navigazione non disponibile");
+            }
+        }
+
+        // Navigazione verso lavoro
+        function navigateWork() {
+            try {
+                if (top.JavascriptBinding && top.JavascriptBinding.LaunchGuidance) {
+                    top.JavascriptBinding.LaunchGuidance(CONFIG.work.lat, CONFIG.work.lng);
+                }
+            } catch(e) {
+                alert("Navigazione non disponibile");
+            }
+        }
+
+        // Chiamata rapida
+        function quickCall() {
+            try {
+                if (top.JavascriptBinding && top.JavascriptBinding.LaunchPhoneCall) {
+                    top.JavascriptBinding.LaunchPhoneCall(CONFIG.phoneNumber);
+                }
+            } catch(e) {
+                alert("Chiamata non disponibile");
+            }
+        }
+
+        // Inizializzazione
+        updateClock();
+        updateVehicleData();
+
+        // Aggiorna ogni secondo
+        setInterval(updateClock, 1000);
+        setInterval(updateVehicleData, 500);
+    </script>
+</body>
+</html>
