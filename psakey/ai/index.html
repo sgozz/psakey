@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>AI Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 46px 0 0 0;
+            background: #0a0a0a;
+            color: #ffffff;
+            font-family: Arial, sans-serif;
+            width: 800px;
+            height: 434px;
+            overflow: hidden;
+        }
+
+        /* Header */
+        .header {
+            height: 50px;
+            background: #1a1a1a;
+            border-bottom: 2px solid #333;
+            padding: 0 20px;
+            line-height: 50px;
+        }
+
+        .header-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+
+        .header-back {
+            float: right;
+            color: #888;
+            text-decoration: none;
+            font-size: 18px;
+        }
+
+        .header-back:hover {
+            color: #fff;
+        }
+
+        /* Area risposta */
+        .response-area {
+            height: 280px;
+            padding: 20px;
+            overflow-y: auto;
+            background: #111;
+        }
+
+        .response-text {
+            font-size: 22px;
+            line-height: 1.5;
+            color: #eee;
+        }
+
+        .response-text.loading {
+            color: #888;
+            font-style: italic;
+        }
+
+        .response-text.error {
+            color: #f44336;
+        }
+
+        /* Area input */
+        .input-area {
+            height: 104px;
+            background: #1a1a1a;
+            border-top: 2px solid #333;
+            padding: 15px 20px;
+        }
+
+        .input-row {
+            display: table;
+            width: 100%;
+            height: 74px;
+        }
+
+        .input-field {
+            display: table-cell;
+            width: 85%;
+            vertical-align: middle;
+            padding-right: 15px;
+        }
+
+        .input-field input {
+            width: 100%;
+            height: 50px;
+            font-size: 20px;
+            padding: 0 15px;
+            border: 2px solid #333;
+            border-radius: 8px;
+            background: #222;
+            color: #fff;
+            outline: none;
+        }
+
+        .input-field input:focus {
+            border-color: #4CAF50;
+        }
+
+        .input-button {
+            display: table-cell;
+            width: 15%;
+            vertical-align: middle;
+        }
+
+        .input-button button {
+            width: 100%;
+            height: 50px;
+            font-size: 20px;
+            font-weight: bold;
+            background: #4CAF50;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .input-button button:hover {
+            background: #45a049;
+        }
+
+        .input-button button:disabled {
+            background: #333;
+            color: #666;
+            cursor: not-allowed;
+        }
+
+        /* Quick buttons grid */
+        .quick-grid {
+            display: table;
+            width: 100%;
+            height: 100%;
+            table-layout: fixed;
+        }
+
+        .quick-row {
+            display: table-row;
+        }
+
+        .quick-btn {
+            display: table-cell;
+            vertical-align: middle;
+            text-align: center;
+            padding: 10px;
+            font-size: 16px;
+            background: #222;
+            color: #ccc;
+            border: 1px solid #333;
+            cursor: pointer;
+        }
+
+        .quick-btn:hover, .quick-btn:active {
+            background: #333;
+            color: #fff;
+        }
+
+        .quick-btn .icon {
+            font-size: 24px;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        /* Input mode */
+        .input-mode {
+            display: none;
+        }
+
+        .input-mode.active {
+            display: block;
+        }
+
+        .quick-mode {
+            display: block;
+        }
+
+        .quick-mode.hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <span class="header-title">AI Assistant</span>
+        <a href="/dashboard.html" class="header-back">← Dashboard</a>
+    </div>
+
+    <!-- Area risposta -->
+    <div class="response-area">
+        <div class="response-text" id="response">
+            Ciao! Sono il tuo assistente AI. Chiedimi qualcosa...
+        </div>
+    </div>
+
+    <!-- Area input -->
+    <div class="input-area">
+        <!-- Modalita pulsanti rapidi -->
+        <div class="quick-mode" id="quickMode">
+            <div class="quick-grid">
+                <div class="quick-row">
+                    <div class="quick-btn" onclick="askWithLocation('Che tempo fa in questo momento qui?')">
+                        <span class="icon">&#9788;</span>Meteo qui
+                    </div>
+                    <div class="quick-btn" onclick="askWithLocation('Cosa posso visitare di interessante qui vicino?')">
+                        <span class="icon">&#9873;</span>Cosa vedere
+                    </div>
+                    <div class="quick-btn" onclick="askWithLocation('Quali ristoranti ci sono qui vicino?')">
+                        <span class="icon">&#9749;</span>Ristoranti
+                    </div>
+                    <div class="quick-btn" onclick="askWithAutonomy()">
+                        <span class="icon">&#9981;</span>Benzina
+                    </div>
+                </div>
+                <div class="quick-row">
+                    <div class="quick-btn" onclick="askAboutTrip()">
+                        <span class="icon">&#9656;</span>Info viaggio
+                    </div>
+                    <div class="quick-btn" onclick="askAboutConsumption()">
+                        <span class="icon">&#9662;</span>Consumi
+                    </div>
+                    <div class="quick-btn" onclick="askDrivingTips()">
+                        <span class="icon">&#9733;</span>Eco-guida
+                    </div>
+                    <div class="quick-btn" onclick="showInput()">
+                        <span class="icon">&#9998;</span>Scrivi...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modalita input testuale -->
+        <div class="input-mode" id="inputMode">
+            <div class="input-row">
+                <div class="input-field">
+                    <input type="text" id="messageInput" placeholder="Scrivi un messaggio..." onkeypress="handleKeyPress(event)">
+                </div>
+                <div class="input-button">
+                    <button id="sendBtn" onclick="sendMessage()">Invia</button>
+                </div>
+            </div>
+            <div style="text-align:center; margin-top:10px;">
+                <button class="quick-btn" onclick="showQuickMode()" style="display:inline-block; padding:8px 20px; border-radius:15px;">← Torna ai pulsanti</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var isLoading = false;
+
+        function handleKeyPress(e) {
+            if (e.keyCode === 13) {
+                sendMessage();
+            }
+        }
+
+        // Mostra modalita input testuale
+        function showInput() {
+            document.getElementById('quickMode').className = 'quick-mode hidden';
+            document.getElementById('inputMode').className = 'input-mode active';
+            document.getElementById('messageInput').focus();
+        }
+
+        // Torna ai pulsanti rapidi
+        function showQuickMode() {
+            document.getElementById('quickMode').className = 'quick-mode';
+            document.getElementById('inputMode').className = 'input-mode';
+        }
+
+        // ============================================
+        // FUNZIONI PER DATI SMEG+
+        // ============================================
+
+        // Ottieni posizione GPS
+        function getPosition() {
+            try {
+                if (top.GetCurrentPosition) {
+                    return {
+                        lat: top.GetCurrentPosition.Latitude(),
+                        lng: top.GetCurrentPosition.Longitude(),
+                        town: top.GetCurrentPosition.Town ? top.GetCurrentPosition.Town() : '',
+                        street: top.GetCurrentPosition.Street ? top.GetCurrentPosition.Street() : ''
+                    };
+                }
+            } catch(e) {}
+            return null;
+        }
+
+        // Ottieni autonomia
+        function getAutonomy() {
+            try {
+                if (top.GetCar && top.GetCar.Autonomy) {
+                    return top.GetCar.Autonomy();
+                }
+            } catch(e) {}
+            return null;
+        }
+
+        // Ottieni destinazione
+        function getDestination() {
+            try {
+                if (top.GetDestination) {
+                    return {
+                        town: top.GetDestination.Town ? top.GetDestination.Town() : '',
+                        lat: top.GetDestination.Latitude(),
+                        lng: top.GetDestination.Longitude()
+                    };
+                }
+            } catch(e) {}
+            return null;
+        }
+
+        // Ottieni velocita
+        function getSpeed() {
+            try {
+                if (top.GetCar && top.GetCar.Speed) {
+                    return top.GetCar.Speed();
+                }
+            } catch(e) {}
+            return null;
+        }
+
+        // Ottieni dati viaggio 1
+        function getTrip1() {
+            try {
+                if (top.GetCarTrip1) {
+                    return {
+                        mileage: top.GetCarTrip1.Mileage ? top.GetCarTrip1.Mileage() : null,
+                        consumption: top.GetCarTrip1.Consumption ? top.GetCarTrip1.Consumption() : null,
+                        avgSpeed: top.GetCarTrip1.AverageSpeed ? top.GetCarTrip1.AverageSpeed() : null
+                    };
+                }
+            } catch(e) {}
+            return null;
+        }
+
+        // Ottieni dati viaggio 2
+        function getTrip2() {
+            try {
+                if (top.GetCarTrip2) {
+                    return {
+                        mileage: top.GetCarTrip2.Mileage ? top.GetCarTrip2.Mileage() : null,
+                        consumption: top.GetCarTrip2.Consumption ? top.GetCarTrip2.Consumption() : null,
+                        avgSpeed: top.GetCarTrip2.AverageSpeed ? top.GetCarTrip2.AverageSpeed() : null
+                    };
+                }
+            } catch(e) {}
+            return null;
+        }
+
+        // Ottieni tipo carburante
+        function getFuelType() {
+            try {
+                if (top.GetCar && top.GetCar.FuelType) {
+                    var type = top.GetCar.FuelType();
+                    // 1=benzina, 2=diesel, 3=GPL, 4=metano, 5=elettrico, 6=ibrido
+                    var types = {1: 'benzina', 2: 'diesel', 3: 'GPL', 4: 'metano', 5: 'elettrico', 6: 'ibrido'};
+                    return types[type] || 'carburante';
+                }
+            } catch(e) {}
+            return null;
+        }
+
+        // Ottieni chilometraggio totale
+        function getTotalMileage() {
+            try {
+                if (top.GetCar && top.GetCar.Mileage) {
+                    return top.GetCar.Mileage();
+                }
+            } catch(e) {}
+            return null;
+        }
+
+        // ============================================
+        // DOMANDE CONTESTUALI
+        // ============================================
+
+        // Domanda con posizione GPS
+        function askWithLocation(baseQuestion) {
+            if (isLoading) return;
+            var pos = getPosition();
+            var question = baseQuestion;
+
+            if (pos && pos.lat && pos.lng) {
+                question += ' Mi trovo alle coordinate ' + pos.lat.toFixed(4) + ', ' + pos.lng.toFixed(4);
+                if (pos.town) {
+                    question += ' vicino a ' + pos.town;
+                }
+                question += '.';
+            }
+
+            document.getElementById('messageInput').value = question;
+            sendMessage();
+        }
+
+        // Domanda su benzina con autonomia
+        function askWithAutonomy() {
+            if (isLoading) return;
+            var pos = getPosition();
+            var autonomy = getAutonomy();
+
+            var question = 'Dove posso trovare un distributore di benzina?';
+
+            if (autonomy !== null) {
+                question = 'Ho ' + autonomy + ' km di autonomia. Dove posso trovare un distributore?';
+            }
+
+            if (pos && pos.lat && pos.lng) {
+                question += ' Mi trovo alle coordinate ' + pos.lat.toFixed(4) + ', ' + pos.lng.toFixed(4) + '.';
+            }
+
+            document.getElementById('messageInput').value = question;
+            sendMessage();
+        }
+
+        // Domanda sul viaggio/destinazione
+        function askAboutTrip() {
+            if (isLoading) return;
+            var pos = getPosition();
+            var dest = getDestination();
+            var autonomy = getAutonomy();
+            var speed = getSpeed();
+
+            var question = 'Dammi informazioni utili per il mio viaggio.';
+
+            if (pos && pos.lat && pos.lng) {
+                question += ' Parto da coordinate ' + pos.lat.toFixed(4) + ', ' + pos.lng.toFixed(4) + '.';
+            }
+
+            if (dest && dest.town) {
+                question += ' Destinazione: ' + dest.town + '.';
+            } else if (dest && dest.lat && dest.lng) {
+                question += ' Destinazione: coordinate ' + dest.lat.toFixed(4) + ', ' + dest.lng.toFixed(4) + '.';
+            }
+
+            if (autonomy !== null) {
+                question += ' Ho ' + autonomy + ' km di autonomia.';
+            }
+
+            if (speed !== null && speed > 0) {
+                question += ' Velocita attuale: ' + speed + ' km/h.';
+            }
+
+            document.getElementById('messageInput').value = question;
+            sendMessage();
+        }
+
+        // Domanda sui consumi
+        function askAboutConsumption() {
+            if (isLoading) return;
+            var trip1 = getTrip1();
+            var trip2 = getTrip2();
+            var fuelType = getFuelType();
+            var totalMileage = getTotalMileage();
+            var autonomy = getAutonomy();
+
+            var question = 'Analizza i miei consumi e dimmi se sono nella norma.';
+
+            if (fuelType) {
+                question += ' Auto a ' + fuelType + '.';
+            }
+
+            if (totalMileage) {
+                question += ' Chilometraggio totale: ' + totalMileage + ' km.';
+            }
+
+            if (trip1 && (trip1.consumption || trip1.mileage || trip1.avgSpeed)) {
+                question += ' Viaggio attuale:';
+                if (trip1.mileage) question += ' ' + trip1.mileage + ' km percorsi,';
+                if (trip1.consumption) question += ' consumo ' + trip1.consumption + ' l/100km,';
+                if (trip1.avgSpeed) question += ' velocita media ' + trip1.avgSpeed + ' km/h.';
+            }
+
+            if (trip2 && (trip2.consumption || trip2.mileage || trip2.avgSpeed)) {
+                question += ' Storico:';
+                if (trip2.mileage) question += ' ' + trip2.mileage + ' km,';
+                if (trip2.consumption) question += ' consumo ' + trip2.consumption + ' l/100km,';
+                if (trip2.avgSpeed) question += ' velocita media ' + trip2.avgSpeed + ' km/h.';
+            }
+
+            if (autonomy) {
+                question += ' Autonomia attuale: ' + autonomy + ' km.';
+            }
+
+            document.getElementById('messageInput').value = question;
+            sendMessage();
+        }
+
+        // Consigli eco-guida basati sui dati
+        function askDrivingTips() {
+            if (isLoading) return;
+            var trip1 = getTrip1();
+            var fuelType = getFuelType();
+            var speed = getSpeed();
+
+            var question = 'Dammi consigli per ridurre i consumi e guidare in modo ecologico.';
+
+            if (fuelType) {
+                question += ' Ho un\'auto a ' + fuelType + '.';
+            }
+
+            if (trip1 && trip1.consumption) {
+                question += ' Attualmente consumo ' + trip1.consumption + ' l/100km.';
+            }
+
+            if (trip1 && trip1.avgSpeed) {
+                question += ' Velocita media: ' + trip1.avgSpeed + ' km/h.';
+            }
+
+            if (speed && speed > 0) {
+                question += ' Ora vado a ' + speed + ' km/h.';
+            }
+
+            document.getElementById('messageInput').value = question;
+            sendMessage();
+        }
+
+        // Domanda semplice
+        function askQuestion(question) {
+            if (isLoading) return;
+            document.getElementById('messageInput').value = question;
+            sendMessage();
+        }
+
+        function sendMessage() {
+            if (isLoading) return;
+
+            var input = document.getElementById('messageInput');
+            var message = input.value.trim();
+
+            if (!message) return;
+
+            var responseEl = document.getElementById('response');
+            var sendBtn = document.getElementById('sendBtn');
+
+            // Mostra loading
+            isLoading = true;
+            responseEl.innerHTML = 'Sto pensando...';
+            responseEl.className = 'response-text loading';
+            sendBtn.disabled = true;
+            input.disabled = true;
+
+            // Invia richiesta
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', '/ai/chat.php', true);
+            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4) {
+                    isLoading = false;
+                    sendBtn.disabled = false;
+                    input.disabled = false;
+                    input.value = '';
+                    input.focus();
+
+                    if (xhr.status === 200) {
+                        try {
+                            var data = JSON.parse(xhr.responseText);
+                            if (data.error) {
+                                responseEl.innerHTML = 'Errore: ' + data.error;
+                                responseEl.className = 'response-text error';
+                            } else {
+                                responseEl.innerHTML = data.response || 'Nessuna risposta';
+                                responseEl.className = 'response-text';
+                            }
+                        } catch(e) {
+                            responseEl.innerHTML = 'Errore nel parsing della risposta';
+                            responseEl.className = 'response-text error';
+                        }
+                    } else {
+                        responseEl.innerHTML = 'Errore di connessione';
+                        responseEl.className = 'response-text error';
+                    }
+                }
+            };
+
+            xhr.send('message=' + encodeURIComponent(message));
+        }
+    </script>
+</body>
+</html>
