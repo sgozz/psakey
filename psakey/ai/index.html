@@ -135,27 +135,56 @@
             cursor: not-allowed;
         }
 
-        /* Quick buttons */
-        .quick-buttons {
-            margin-top: 10px;
-            text-align: center;
+        /* Quick buttons grid */
+        .quick-grid {
+            display: table;
+            width: 100%;
+            height: 100%;
+            table-layout: fixed;
+        }
+
+        .quick-row {
+            display: table-row;
         }
 
         .quick-btn {
-            display: inline-block;
-            padding: 8px 16px;
-            margin: 0 5px;
-            font-size: 14px;
-            background: #333;
-            color: #aaa;
-            border: none;
-            border-radius: 15px;
+            display: table-cell;
+            vertical-align: middle;
+            text-align: center;
+            padding: 10px;
+            font-size: 16px;
+            background: #222;
+            color: #ccc;
+            border: 1px solid #333;
             cursor: pointer;
         }
 
-        .quick-btn:hover {
-            background: #444;
+        .quick-btn:hover, .quick-btn:active {
+            background: #333;
             color: #fff;
+        }
+
+        .quick-btn .icon {
+            font-size: 24px;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        /* Input mode */
+        .input-mode {
+            display: none;
+        }
+
+        .input-mode.active {
+            display: block;
+        }
+
+        .quick-mode {
+            display: block;
+        }
+
+        .quick-mode.hidden {
+            display: none;
         }
     </style>
 </head>
@@ -175,19 +204,53 @@
 
     <!-- Area input -->
     <div class="input-area">
-        <div class="input-row">
-            <div class="input-field">
-                <input type="text" id="messageInput" placeholder="Scrivi un messaggio..." onkeypress="handleKeyPress(event)">
-            </div>
-            <div class="input-button">
-                <button id="sendBtn" onclick="sendMessage()">Invia</button>
+        <!-- Modalita pulsanti rapidi -->
+        <div class="quick-mode" id="quickMode">
+            <div class="quick-grid">
+                <div class="quick-row">
+                    <div class="quick-btn" onclick="askQuestion('Che tempo fa oggi in Italia?')">
+                        <span class="icon">&#9788;</span>Meteo
+                    </div>
+                    <div class="quick-btn" onclick="askQuestion('Quali sono le ultime notizie importanti di oggi?')">
+                        <span class="icon">&#9993;</span>Notizie
+                    </div>
+                    <div class="quick-btn" onclick="askQuestion('Raccontami una curiosita interessante')">
+                        <span class="icon">&#9733;</span>Curiosita
+                    </div>
+                    <div class="quick-btn" onclick="askQuestion('Qual e il prezzo medio della benzina oggi in Italia?')">
+                        <span class="icon">&#9981;</span>Benzina
+                    </div>
+                </div>
+                <div class="quick-row">
+                    <div class="quick-btn" onclick="askQuestion('Dimmi una barzelletta divertente')">
+                        <span class="icon">&#9786;</span>Barzelletta
+                    </div>
+                    <div class="quick-btn" onclick="askQuestion('Suggeriscimi un ristorante tipico italiano')">
+                        <span class="icon">&#9749;</span>Ristorante
+                    </div>
+                    <div class="quick-btn" onclick="askQuestion('Dammi un consiglio per guidare in sicurezza')">
+                        <span class="icon">&#9888;</span>Sicurezza
+                    </div>
+                    <div class="quick-btn" onclick="showInput()">
+                        <span class="icon">&#9998;</span>Scrivi...
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="quick-buttons">
-            <button class="quick-btn" onclick="quickMessage('Che tempo fa oggi?')">Meteo</button>
-            <button class="quick-btn" onclick="quickMessage('Come si arriva a...')">Direzioni</button>
-            <button class="quick-btn" onclick="quickMessage('Raccontami una curiosita')">Curiosita</button>
-            <button class="quick-btn" onclick="quickMessage('Traduci in inglese:')">Traduci</button>
+
+        <!-- Modalita input testuale -->
+        <div class="input-mode" id="inputMode">
+            <div class="input-row">
+                <div class="input-field">
+                    <input type="text" id="messageInput" placeholder="Scrivi un messaggio..." onkeypress="handleKeyPress(event)">
+                </div>
+                <div class="input-button">
+                    <button id="sendBtn" onclick="sendMessage()">Invia</button>
+                </div>
+            </div>
+            <div style="text-align:center; margin-top:10px;">
+                <button class="quick-btn" onclick="showQuickMode()" style="display:inline-block; padding:8px 20px; border-radius:15px;">← Torna ai pulsanti</button>
+            </div>
         </div>
     </div>
 
@@ -200,9 +263,24 @@
             }
         }
 
-        function quickMessage(text) {
-            document.getElementById('messageInput').value = text;
+        // Mostra modalita input testuale
+        function showInput() {
+            document.getElementById('quickMode').className = 'quick-mode hidden';
+            document.getElementById('inputMode').className = 'input-mode active';
             document.getElementById('messageInput').focus();
+        }
+
+        // Torna ai pulsanti rapidi
+        function showQuickMode() {
+            document.getElementById('quickMode').className = 'quick-mode';
+            document.getElementById('inputMode').className = 'input-mode';
+        }
+
+        // Invia domanda predefinita
+        function askQuestion(question) {
+            if (isLoading) return;
+            document.getElementById('messageInput').value = question;
+            sendMessage();
         }
 
         function sendMessage() {
