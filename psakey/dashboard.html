@@ -156,45 +156,6 @@
         .driving-indicator.active {
             background: #4CAF50;
         }
-
-        /* Badge notifiche WhatsApp */
-        .notifications {
-            display: inline-block;
-            margin-left: 20px;
-            cursor: pointer;
-        }
-
-        .notif-badge {
-            display: inline-block;
-            background: #25D366;
-            color: #fff;
-            font-size: 22px;
-            font-weight: bold;
-            padding: 8px 16px;
-            border-radius: 20px;
-            min-width: 50px;
-            text-align: center;
-        }
-
-        .notif-badge.empty {
-            background: #333;
-            color: #666;
-        }
-
-        .notif-badge.has-messages {
-            background: #25D366;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.7; }
-            100% { opacity: 1; }
-        }
-
-        .notif-icon {
-            margin-right: 6px;
-        }
     </style>
 </head>
 <body>
@@ -204,11 +165,6 @@
     <div class="header">
         <div class="header-left">
             <span class="time" id="clock">--:--</span>
-            <span class="notifications" onclick="resetNotifications()" title="Clicca per azzerare">
-                <span class="notif-badge empty" id="notifBadge">
-                    <span class="notif-icon">W</span><span id="notifCount">0</span>
-                </span>
-            </span>
         </div>
         <div class="header-right">
             <span class="autonomy">
@@ -373,64 +329,13 @@
             }
         }
 
-        // ============================================
-        // NOTIFICHE WHATSAPP
-        // ============================================
-
-        // Aggiorna contatore notifiche
-        function updateNotifications() {
-            try {
-                var xhr = new XMLHttpRequest();
-                xhr.open('GET', '/api/status.php', true);
-                xhr.onreadystatechange = function() {
-                    if (xhr.readyState === 4 && xhr.status === 200) {
-                        var data = JSON.parse(xhr.responseText);
-                        var count = data.whatsapp || 0;
-                        var badge = document.getElementById('notifBadge');
-                        var countEl = document.getElementById('notifCount');
-
-                        countEl.innerHTML = count;
-
-                        if (count > 0) {
-                            badge.className = 'notif-badge has-messages';
-                        } else {
-                            badge.className = 'notif-badge empty';
-                        }
-                    }
-                };
-                xhr.send();
-            } catch(e) {
-                // API non disponibile
-            }
-        }
-
-        // Azzera contatore notifiche
-        function resetNotifications() {
-            try {
-                var xhr = new XMLHttpRequest();
-                xhr.open('GET', '/api/notify.php?action=reset&app=whatsapp', true);
-                xhr.onreadystatechange = function() {
-                    if (xhr.readyState === 4) {
-                        updateNotifications();
-                    }
-                };
-                xhr.send();
-            } catch(e) {
-                // API non disponibile
-            }
-        }
-
-        // ============================================
-        // INIZIALIZZAZIONE
-        // ============================================
+        // Inizializzazione
         updateClock();
         updateVehicleData();
-        updateNotifications();
 
         // Aggiorna periodicamente
         setInterval(updateClock, 1000);
         setInterval(updateVehicleData, 500);
-        setInterval(updateNotifications, 5000); // Ogni 5 secondi
     </script>
 </body>
 </html>
